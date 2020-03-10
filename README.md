@@ -16,7 +16,8 @@
         Running:-
         1.Run the lift python script
         2.Run the client python script in another Terminal
-        3.Enter an input for number of initial inputs(>0) in the lift and Enter Y during the execution of code in the client                               terminal to add dynamic input 
+        3.Enter an input for number of initial inputs(>0) in the lift and Enter Y during the 
+        execution of code in the client terminal to add dynamic input 
         
         Input Format-INITIAL FLOOR DIRECTION(U/D) TARGET FLOOR
         
