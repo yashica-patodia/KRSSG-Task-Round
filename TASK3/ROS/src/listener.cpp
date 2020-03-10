@@ -13,11 +13,11 @@ using namespace cv;
 #include "std_msgs/MultiArrayLayout.h"
 #include "std_msgs/MultiArrayDimension.h"
 #include "std_msgs/Float32MultiArray.h"
-typedef struct
+struct coordi
 {
   int x;
   int y;
-}coordi;
+};
 
 struct node {
 
@@ -26,83 +26,77 @@ struct node {
     float distance;
 };
 
-
-
 node start_node;
 node end_node;
 
-Mat c_0(1,1,CV_8UC3,Scalar(255,255,255));
-Mat c_1(1,1,CV_8UC3,Scalar(0,0,0));
-Mat c_3(1,1,CV_8UC3,Scalar(120,120,120));
+Mat White(1,1,CV_8UC3,Scalar(255,255,255));
+Mat Black(1,1,CV_8UC3,Scalar(0,0,0));
+Mat Brown(1,1,CV_8UC3,Scalar(120,120,120));
 
 
 int villain_Radius=30;
-
+int rewire_radius=50;
 Mat img;
+
 node *T_start[5000],*T_end[5000];
+
 int start_nodes = 0,end_nodes=0;
 int reached = 0;
 int Line_Radius=20;
 vector<coordi>t1,t2;
-
+int step_size=5;
 int present[800][800]={0};
 
-
-
+//FUNCTION FOR INITIALIZATION AND RESETTING THE ENVIRONMENT
 void init(int a,int b,int c,int d)
 {
   start_nodes=0;
-    end_nodes=0;
-    reached=0;
-    for(int i=0;i<5000;i++)
+  end_nodes=0;
+  reached=0;
+  for(int i=0;i<5000;i++)
+  {
+    T_start[i]=NULL;
+    T_end[i]=NULL;
+  }
+
+  while(t1.size())
+  {
+    t1.pop_back();
+  };
+
+  while(t2.size())
+  {
+    t2.pop_back();
+  }
+
+  for(int i=0;i<800;i++)
+  {
+    for(int j=0;j<800;j++)
     {
-      T_start[i]=NULL;
-      T_end[i]=NULL;
+      present[i][j]=0;
+
     }
-
-    while(t1.size())
-    {
-      t1.pop_back();
-    };
-
-    while(t2.size())
-    {
-      t2.pop_back();
-
-    }
-
-    for(int i=0;i<800;i++)
-    {
-      for(int j=0;j<800;j++)
-      {
-        present[i][j]=0;
-
-      }
-    }
+  }
 
 
+  start_node.position.x = a;
+  start_node.position.y = b;
+  start_node.parent = NULL;
+  start_node.distance=0;
+  present[start_node.position.x][start_node.position.y]=1;
+  T_start[start_nodes++] = &start_node;
 
-    start_node.position.x = a;
-    start_node.position.y = b;
-    start_node.parent = NULL;
-    start_node.distance=0;
-    present[start_node.position.x][start_node.position.y]=1;
+  end_node.position.x = d;
+  end_node.position.y = c;
+  end_node.parent=NULL;
+  end_node.distance=0;
+  present[end_node.position.x][end_node.position.y]=1;
+  T_end[end_nodes++]  = &end_node;
 
+  srand(time(NULL));
 
-
-    T_start[start_nodes++] = &start_node;
-    end_node.position.x = d;
-    end_node.position.y = c;
-    end_node.parent=NULL;
-    end_node.distance=0;
-    present[end_node.position.x][end_node.position.y]=1;
-    T_end[end_nodes++]  = &end_node;
-
-    srand(time(NULL));
-
-    Mat element=getStructuringElement(MORPH_RECT,Size(5,5),Point(1,1));
-    dilate(img,img,element);
-
+  Mat element=getStructuringElement(MORPH_RECT,Size(5,5),Point(1,1));
+  dilate(img,img,element);
 }
 
 
@@ -126,11 +120,8 @@ float node_dist(coordi p, coordi q)
 int near_node(node rnode, node* Tree[5000],int total_nodes)
 {
   float min_dist = 999.0;
-
   float dist= node_dist(Tree[0]->position, rnode.position);
-
   int lnode = 0, i = 0;
-
   coordi target;
 
   if(Tree==T_start)
@@ -138,7 +129,7 @@ int near_node(node rnode, node* Tree[5000],int total_nodes)
   else
   target=start_node.position;
 
-
+//HEURESTIC APPROACH FOR FINDING NEAREST NODE
   for(i=0; i<total_nodes; i++)
   {
     dist = node_dist(Tree[i]->position, rnode.position) +node_dist(Tree[i]->position,target);
@@ -151,6 +142,7 @@ int near_node(node rnode, node* Tree[5000],int total_nodes)
   return lnode;
 }
 
+//FUNCTION USED FOR FINDING COORDINATES OF STEPNODE
 coordi stepping(coordi nnode,coordi rnode,int step_size)
 {
   coordi interm, step;
@@ -168,6 +160,7 @@ coordi stepping(coordi nnode,coordi rnode,int step_size)
 
 }
 
+//FUNCTION FOR CHECKING THE VALIDITY OF A LINE SEGMENT
 int check_validity_1(coordi p, coordi q)
 {
   coordi large, small;
@@ -202,7 +195,7 @@ int check_validity_1(coordi p, coordi q)
         if(isvalid(i+y,j+x,img)!=1)
           return 0;
 
-        if(img.at<Vec3b>(i+y,j+x)==c_0.at<Vec3b>(0,0))
+        if(img.at<Vec3b>(i+y,j+x)==White.at<Vec3b>(0,0))
           return 0;
 
       }
@@ -212,6 +205,7 @@ int check_validity_1(coordi p, coordi q)
   return 1;
 }
 
+//FUNCTION FOR CHECKING THE VALIDITY OF A LINE SEGMENT
 int check_validity_2(coordi p, coordi q)
 {
   coordi large, small;
@@ -236,7 +230,6 @@ int check_validity_2(coordi p, coordi q)
   for(i=small.y+1; i<large.y; i++)
   {
     int j = (int)(((i - small.y)/slope) + small.x);
-
     for(int x=-Line_Radius/2;x<Line_Radius/2;x++)
     {
       for(int y=-Line_Radius/2;y<Line_Radius/2;y++)
@@ -244,18 +237,16 @@ int check_validity_2(coordi p, coordi q)
         if(isvalid(j+x,i+y,img)!=1)
           return 0;
 
-        if(img.at<Vec3b>(j+x,i+y)==c_0.at<Vec3b>(0,0))
+        if(img.at<Vec3b>(j+x,i+y)==White.at<Vec3b>(0,0))
           return 0;
-
       }
-
     }
   }
   return 1;
 }
 
 
-
+//FUNCTION FOR RENDERING THE FINAL PATH
 void reach(node * a)
 {
   node up;
@@ -267,13 +258,11 @@ void reach(node * a)
     if(up.parent == NULL)
       break;
     up = *(up.parent);
-
     f_node = *(f_node.parent);
   }
-
 }
 
-
+//FUNCTION FOR WRITING DATA TO TEXT FILE
 void data(node* Tree[5000],int total_nodes,node *Check_Tree[5000],int ctotal_nodes,int index)
 { node* a=Tree[total_nodes-1];
   node* b=Check_Tree[index];
@@ -308,7 +297,7 @@ void data(node* Tree[5000],int total_nodes,node *Check_Tree[5000],int ctotal_nod
 
   fstream file;
 
-  file.open("/home/parth/catkin_ws/task.txt",ios::out);
+  file.open("catkin_ws/task.txt",ios::out);
   //cout<<"WRITTEN";
   int f_size=(a_size+b_size);
 
@@ -359,7 +348,7 @@ else
 }
 
 
-
+//FUNCTION FOR FINDING A NODE AT A SPECIFIC COORDINATE
 node* find(coordi v,node *Tree[5000],int total_nodes)
 {
   for(int i=0;i<total_nodes;i++)
@@ -374,11 +363,10 @@ node* find(coordi v,node *Tree[5000],int total_nodes)
 }
 
 
-int rewire_radius=50;
+
 
 void rewire(node *Tree[5000],node *stepnode,int total_nodes,node *Check_Tree[5000],int ctotal_nodes)
 {
-
   for(int i=-rewire_radius;i<rewire_radius;i++)
   {
     for(int j=-rewire_radius;j<rewire_radius;j++)
@@ -387,63 +375,59 @@ void rewire(node *Tree[5000],node *stepnode,int total_nodes,node *Check_Tree[500
         v.x=((stepnode->position).x)+i;
         v.y=((stepnode->position).y)+j;
 
-
-
         float d=node_dist(stepnode->position,(stepnode->parent)->position);
-
         if(isvalid(v.x,v.y,img)==1)
+
         if((present[v.x][v.y]==1))
-        {node *temp=find(v,Tree,total_nodes);
-        if(temp==NULL)
-        return;
-        if(check_validity_1(v,stepnode->position)==1 && check_validity_2(v,stepnode->position)==1 && (node_dist(v,stepnode->position)+(temp->distance))+0.001<(node_dist(stepnode->position,(stepnode->parent)->position)+((stepnode->parent)->distance)))
         {
+          node *temp=find(v,Tree,total_nodes);
+          if(temp==NULL)
+          return;
+          if(check_validity_1(v,stepnode->position)==1 && check_validity_2(v,stepnode->position)==1 && (node_dist(v,stepnode->position)+(temp->distance))+0.001<(node_dist(stepnode->position,(stepnode->parent)->position)+((stepnode->parent)->distance)))
+          {
 
-          //stepnode->parent=find(v,Check_Tree,ctotal_nodes);
-          line(img,Point((stepnode->position).y, (stepnode->position).x), Point(((stepnode->parent)->position).y,((stepnode->parent)->position).x), Scalar(0,0,0), 1, 8);
-          stepnode->parent=temp;
-          stepnode->distance=((stepnode->parent)->distance)+node_dist(v,stepnode->position);
+            //stepnode->parent=find(v,Check_Tree,ctotal_nodes);
+            line(img,Point((stepnode->position).y, (stepnode->position).x), Point(((stepnode->parent)->position).y,((stepnode->parent)->position).x), Scalar(0,0,0), 1, 8);
+            stepnode->parent=temp;
+            stepnode->distance=((stepnode->parent)->distance)+node_dist(v,stepnode->position);
 
-          line(img, Point((stepnode->position).y, (stepnode->position).x), Point(((stepnode->parent)->position).y,((stepnode->parent)->position).x), Scalar(120,120,10),1, 8);
+            line(img, Point((stepnode->position).y, (stepnode->position).x), Point(((stepnode->parent)->position).y,((stepnode->parent)->position).x), Scalar(120,120,10),1, 8);
 
+          }
         }
       }
     }
-  }
 
   for(int i=-rewire_radius;i<rewire_radius;i++)
   {
     for(int j=-rewire_radius;j<rewire_radius;j++)
     {
-        coordi v;
-        v.x=((stepnode->position).x)+i;
-        v.y=((stepnode->position).y)+j;
+      coordi v;
+      v.x=((stepnode->position).x)+i;
+      v.y=((stepnode->position).y)+j;
 
-        if(isvalid(v.x,v.y,img)==1)
-          if((present[v.x][v.y]==1))
+      if(isvalid(v.x,v.y,img)==1)
+      {  if((present[v.x][v.y]==1))
+        {
+          float d=node_dist(stepnode->position,v);
+          node *t=find(v,Tree,total_nodes);
+
+          if(t==NULL)
+          return ;
+          //t=find(v,Check_Tree,ctotal_nodes);
+
+          if(t->distance>(stepnode->distance+d)&&check_validity_1(v,stepnode->position)==1&&check_validity_2(v,stepnode->position)==1)
           {
-            float d=node_dist(stepnode->position,v);
-            node *t=find(v,Tree,total_nodes);
+            line(img,Point(((t->parent)->position).y, ((t->parent)->position).x),Point(v.y,v.x), Scalar(0,0,0), 1, 8);
 
-            if(t==NULL)
-            return ;
-            //t=find(v,Check_Tree,ctotal_nodes);
+            t->parent=stepnode;
+            t->distance=stepnode->distance+d;
 
-            if(t->distance>(stepnode->distance+d)&&check_validity_1(v,stepnode->position)==1&&check_validity_2(v,stepnode->position)==1)
-            {
-              line(img,Point(((t->parent)->position).y, ((t->parent)->position).x),Point(v.y,v.x), Scalar(0,0,0), 1, 8);
-
-              t->parent=stepnode;
-              t->distance=stepnode->distance+d;
-
-              line(img,Point(((t->parent)->position).y, ((t->parent)->position).x),Point(v.y,v.x),Scalar(120,120,11),1, 8);
-            }
-
-
+            line(img,Point(((t->parent)->position).y, ((t->parent)->position).x),Point(v.y,v.x),Scalar(120,120,11),1, 8);
           }
-
+        }
+      }
     }
-
   }
 }
 
@@ -452,9 +436,9 @@ void rewire(node *Tree[5000],node *stepnode,int total_nodes,node *Check_Tree[500
 int rrt_connect( node* Tree[5000],int *total_nodes,node *Check_Tree[5000],int *ctotal_nodes,int color)
 {
 
-  int flag1 = 0, index = 0, flag2 = 0;
-  int step_size=5;
-  float thresh1=10,thresh2=200;
+  int flag1 = 0,index=0,flag2 = 0;
+
+  float thresh1=10;
     node* rnode = new node;
     node* stepnode = new node;
     (rnode->position).x = (rand() % (img.rows));
@@ -478,52 +462,43 @@ int rrt_connect( node* Tree[5000],int *total_nodes,node *Check_Tree[5000],int *c
     if(flag1!=1||flag2!=1)
       return -1;
 
-    if(1)
+    stepnode->position = stepping(Tree[index]->position, rnode->position,step_size);
+    present[(stepnode->position).x][(stepnode->position).y]=1;
+    Tree[(*total_nodes)++]=stepnode;
+    stepnode->parent = Tree[index];
+    stepnode->distance =node_dist(Tree[index]->position,stepnode->position)+(stepnode->parent)->distance;
+
+    line(img, Point((stepnode->position).y, (stepnode->position).x), Point(Tree[index]->position.y, Tree[index]->position.x), Scalar(color,255,0), 2, 8);
+
+   index=near_node(*stepnode,Check_Tree,*ctotal_nodes);
+
+    if((check_validity_1(stepnode->position,Check_Tree[index]->position)) && (check_validity_2(stepnode->position,Check_Tree[index]->position)) && node_dist(stepnode->position,Check_Tree[index]->position)<=step_size)
     {
-
-      stepnode->position = stepping(Tree[index]->position, rnode->position,step_size);
-      present[(stepnode->position).x][(stepnode->position).y]=1;
-      Tree[(*total_nodes)++]=stepnode;
-      stepnode->parent = Tree[index];
-
-      stepnode->distance =node_dist(Tree[index]->position,stepnode->position)+(stepnode->parent)->distance;
-
-     line(img, Point((stepnode->position).y, (stepnode->position).x), Point(Tree[index]->position.y, Tree[index]->position.x), Scalar(color,255,0), 2, 8);
-
-      int index=near_node(*stepnode,Check_Tree,*ctotal_nodes);
-
-      if((check_validity_1(stepnode->position,Check_Tree[index]->position)) && (check_validity_2(stepnode->position,Check_Tree[index]->position)) && node_dist(stepnode->position,Check_Tree[index]->position)<=step_size)
-      {
-        reached=1;
-          cout<<"DONE"<<endl;
-        line(img, Point((stepnode->position).y, (stepnode->position).x), Point(Check_Tree[index]->position.y, Check_Tree[index]->position.x), Scalar(0,255,255), 2, 8);
-        reach(stepnode);
-        reach(Check_Tree[index]);
-        data(Tree,*total_nodes,Check_Tree,*ctotal_nodes,index);
-        return 1;
-
-      }
-
-      //rewire(Tree,stepnode,*total_nodes,Check_Tree,*ctotal_nodes);
-  //    imshow("window", img);
-  //    waitKey(1);
-      for(int i=stepnode->position.x - 1; i <= stepnode->position.x + 1; i++)
-      {
-        for(int j=stepnode->position.y - 1; j <= stepnode->position.y + 1; j++)
-        {
-          if(isvalid(i,j,img)!=1)
-            continue;
-
-          img.at<Vec3b>(i, j)[0] = 110;
-          img.at<Vec3b>(i, j)[1] = 255-color;
-          img.at<Vec3b>(i, j)[2] = 255;
-        }
-      }
-
+      reached=1;
+        cout<<"DONE"<<endl;
+      line(img, Point((stepnode->position).y, (stepnode->position).x), Point(Check_Tree[index]->position.y, Check_Tree[index]->position.x), Scalar(0,255,255), 2, 8);
+      reach(stepnode);
+      reach(Check_Tree[index]);
+      data(Tree,*total_nodes,Check_Tree,*ctotal_nodes,index);
       return 1;
+
     }
-    return -1;
-  }
+//RRT* CAN BE SWITCHED ON BY UNCOMMENTING THE LINE BELOW
+    //rewire(Tree,stepnode,*total_nodes,Check_Tree,*ctotal_nodes);
+    for(int i=stepnode->position.x - 1; i <= stepnode->position.x + 1; i++)
+    {
+      for(int j=stepnode->position.y - 1; j <= stepnode->position.y + 1; j++)
+      {
+        if(isvalid(i,j,img)!=1)
+          continue;
+
+        img.at<Vec3b>(i, j)[0] = 110;
+        img.at<Vec3b>(i, j)[1] = 255-color;
+        img.at<Vec3b>(i, j)[2] = 255;
+      }
+    }
+  return 1;
+}
 
 
 void render_image(const turtlesim::Pose::ConstPtr& arr)
@@ -532,7 +507,7 @@ void render_image(const turtlesim::Pose::ConstPtr& arr)
   {
     for(int j=-1;j<=1;j++)
     {
-      img.at<Vec3b>((int)(img.cols-(arr->y)/11.0*img.cols)+i,(int)((arr->x)/11.0*img.rows+j))=c_3.at<Vec3b>(0,0);
+      img.at<Vec3b>((int)(img.cols-(arr->y)/11.0*img.cols)+i,(int)((arr->x)/11.0*img.rows+j))=Brown.at<Vec3b>(0,0);
     }
   }
   imshow("window",img);
@@ -542,7 +517,7 @@ void render_image(const turtlesim::Pose::ConstPtr& arr)
   {
     for(int j=-1;j<=1;j++)
     {
-      img.at<Vec3b>((int)(img.cols-(arr->y)/11.0*img.cols)+i,(int)((arr->x)/11.0*img.rows+j))==c_1.at<Vec3b>(0,0);
+      img.at<Vec3b>((int)(img.cols-(arr->y)/11.0*img.cols)+i,(int)((arr->x)/11.0*img.rows+j))==Black.at<Vec3b>(0,0);
     }
   }
 
@@ -556,11 +531,7 @@ void render_image(const turtlesim::Pose::ConstPtr& arr)
 void chatterCallback(const std_msgs::Float32MultiArray::ConstPtr& arr)
 { cout<<"RECEIVED"<<endl;
 
-  img=imread("/home/parth/Downloads/task.png",1);
-
-//  imshow("window",img);
-//  waitKey(1);
-//  cout<<"RECEIVED"<<endl;
+  img=imread("task.png",1);
   float a[90];
   int i = 0;
 
@@ -568,19 +539,11 @@ void chatterCallback(const std_msgs::Float32MultiArray::ConstPtr& arr)
   {
     a[i]=*it;
     i++;
-  //  cout<<"HERE_!"<<endl;
   }
 
 
   if(isvalid((int)(img.cols-(a[1])/11.0*img.cols),(int)((a[0])/11.0*img.rows),img)==1)
   {  init(int(img.cols-(a[1])/11.0*img.cols),int((a[0])/11.0*img.rows),550,550);
-  //  cout<<"HERE0"<<endl;
-
-  }
-  else
-  {
-//    cout<<"SHIT"<<endl;
-
   }
   coordi t;
   t.x=(int)(img.cols-(a[3])/11.0*img.cols);
@@ -592,11 +555,9 @@ void chatterCallback(const std_msgs::Float32MultiArray::ConstPtr& arr)
     for(int l=-villain_Radius;l<villain_Radius;l++)
     {
       if(isvalid((int)(img.cols-(a[2])/11.0*img.cols)+l,(int)((a[3])/11.0*img.rows)+k,img)==1)
-        img.at<Vec3b>((int)(img.cols-(a[3])/11.0*img.cols)+l,(int)((a[2])/11.0*img.rows)+k)=c_0.at<Vec3b>(0,0);
+        img.at<Vec3b>((int)(img.cols-(a[3])/11.0*img.cols)+l,(int)((a[2])/11.0*img.rows)+k)=White.at<Vec3b>(0,0);
     }
   }
-
-
 
   for(int i=start_node.position.x - 5; i < start_node.position.x + 5; i++)
   {
@@ -608,36 +569,28 @@ void chatterCallback(const std_msgs::Float32MultiArray::ConstPtr& arr)
     }
   }
 
-  //imshow("window",img);
-  //waitKey(1);
-
-
   i=0;
   while(reached==0)
-  {   int n=0;
-     if((i%2)==0)
-      {n= rrt_connect(T_start,&start_nodes,T_end,&end_nodes,255);
+  { int n=0;
+    if((i%2)==0)
+    { n= rrt_connect(T_start,&start_nodes,T_end,&end_nodes,255);
       if(n==-1)
         i--;
-      }
-      else
-      {
+    }
+    else
+    {
       n= rrt_connect(T_end,&end_nodes,T_start,&start_nodes,0);
       if(n==-1)
         i--;
-      }
-      i++;
-
+    }
+    i++;
   }
-
-
 }
 
 int main(int argc, char **argv)
 {
-
   namedWindow("window",WINDOW_NORMAL);
-  img=imread("/home/parth/Downloads/task.png",1);
+  img=imread("task.png",1);
     for(int i=0;i<img.rows;i++)
         {
           for(int j=0;j<img.cols;j++)
@@ -651,17 +604,12 @@ int main(int argc, char **argv)
 
           }
         }
-
-    //imshow("window",img);
-    //waitKey(10);
   ros::init(argc, argv, "listener1");
-
   ros::NodeHandle n;
-
   ros::Subscriber sub = n.subscribe("chatter", 1000, chatterCallback);
+
   init(50,40,550,500);
   int i=0;
-  i=0;
   while(reached==0)
   {   int n=0;
      if((i%2)==0)
@@ -676,12 +624,9 @@ int main(int argc, char **argv)
         i--;
       }
       i++;
-
   }
 
   ros::Subscriber sub1=n.subscribe("/turtle1/pose",2000,render_image);
-
   ros::spin();
-
   return 0;
 }

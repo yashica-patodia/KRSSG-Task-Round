@@ -20,8 +20,9 @@ class TurtleBot:
 
         self.velocity_publisher = rospy.Publisher('/turtle1/cmd_vel',
                                                   Twist, queue_size=10)
+#VILLAIN TURTLE MOVES IN A CIRCLE
         self.villain_subscriber=rospy.Subscriber('/turtle2/pose',Pose,self.update_v_pose)
-
+#VELOCITY PUBLISHER FOR VILLAIN TURTLE
         self.velocity2_publisher=rospy.Publisher('/turtle2/cmd_vel',
                                                   Twist, queue_size=10)
         self.warning_publisher=rospy.Publisher('chatter',Float32MultiArray,queue_size=10)
@@ -81,6 +82,8 @@ class TurtleBot:
         return constant * (self.steering_angle(goal_pose) - self.pose.theta)
 
     def move2goal(self,target):
+
+# angular_velocity PID CONSTANTS
         goal_pose=target
         tolerance=0.05
         Kp1=6
@@ -89,8 +92,9 @@ class TurtleBot:
         error1=self.steering_angle(goal_pose)-self.pose.theta
         prev_error1=error1
         integral1=0.0
-        diff1=error1*10
 
+        diff1=error1*10
+#linear_velocity PID CONSTANTS
         Kp=1.5
         Ki=0
         Kd=0
@@ -126,14 +130,13 @@ class TurtleBot:
             vel_msg.angular.y=0
             vel_msg.angular.z=angular_velocity
             self.velocity_publisher.publish(vel_msg)
+
             vel_msg.linear.x =2.544
             vel_msg.angular.z=1
             self.velocity2_publisher.publish(vel_msg)
-
             self.rate.sleep()
 
             if(self.distance(self.villain_pose)<2 and int(time.time()-time_check)>2):
-                print(int(time.time()-time_check))
                 while not rospy.is_shutdown() :
                     try:
                         l=[self.pose.x,self.pose.y,self.villain_pose.x,self.villain_pose.y]

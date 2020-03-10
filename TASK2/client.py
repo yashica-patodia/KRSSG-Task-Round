@@ -1,6 +1,8 @@
 import socket
 import pickle
 import sys, select
+#PICKLE USED FOR SENDING AND RECEIVING USER DEFINED DATA TYPE
+#SYS,SELECT USED FOR TAKING TIME CONTROLLED INPUT FROM THE USER
 
 HOST = '127.0.0.1'  # The server's hostname or IP address
 PORT = 65432        # The port used by the server
@@ -13,8 +15,8 @@ while True:
         break
     except:continue
 
-class Person():
 
+class Person():
     def __init__(self,origin,destination,direction):
         self.origin=origin
         self.destination=destination
@@ -24,6 +26,7 @@ while True:
     try:
         data=s.recv(1024)
         if data.decode('utf')=='y':
+#INPUT TO BE PUT UNDER 1 SECOND
             print("ENTER Y TO SEND INPUT IN 1 SEC")
             i, o, e = select.select( [sys.stdin], [], [],2)
             if (i):

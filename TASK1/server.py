@@ -1,6 +1,7 @@
 import socket
 from threading import Thread
 import pickle
+import time
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
@@ -13,9 +14,12 @@ s.setblocking(0)
 minion_list=[]
 connection_address=[]
 i=0
-n=3
+
+total_minions=input("ENTER NO. OF MINIONS")
+total_minions=int(total_minions)
+total_minions+=1
 while True:
-    if i==n:
+    if i==total_minions:
         break
     try:
         conn, addr = s.accept()
@@ -43,28 +47,26 @@ while True:
     except:
         continue
 
-
-n=n-1
+total_minions=total_minions-1
 l=[]
-count=0
+total_args=0
+
 while True:
-    if count==total:
+    if total_args==total:
         break
     try:
         data=client.recv(5)
         x=int(data.decode('utf-8'))
         print(x)
         l.append(x)
-        count+=1
+        total_args+=1
     except:
         continue
 
-for i in range(0,n):
+for i in range(0,total_minions):
     minion_list[i].setblocking(0)
 
 client.setblocking(0)
-
-
 
 def minion_send(l,x):
     data=pickle.dumps(l)
@@ -78,13 +80,14 @@ def minion_send(l,x):
 threads=[]
 i=0
 minion_count=0
-while i<count:
-    if (count%n)!=0:
-        step=int((count+n-count%n)/n)
+
+while i<total_args:
+    if (total_args%total_minions)!=0:
+        step=int((total_args+total_minions-total_args%total_minions)/total_minions)
     else:
-        step=int(count/n)
-    if i+step>count:
-        step=count-i
+        step=int(total_args/total_minions)
+    if i+step>total_args:
+        step=total_args-i
     t1=Thread(target=minion_send,args=(l[i:i+step],minion_count))
     threads.append(t1)
     t1.start()
@@ -94,12 +97,11 @@ while i<count:
 for t in threads:
     t.join()
 
-
 l=[]
 thread1=[]
-
 i=0
-for i in range(0,n):
+
+for i in range(0,total_minions):
     minion_list[i].setblocking(0)
     l.append(0)
 
@@ -115,7 +117,7 @@ def minion_take(x):
             continue
 
 i=0
-while i<n:
+while i<total_minions:
     t=Thread(target=minion_take,args=(i,))
     thread1.append(t)
     i+=1
@@ -130,7 +132,7 @@ for i in l:
     sum+=i
 
 print(sum)
-
+time.sleep(1)
 while True:
     try:
         client.sendall(str(sum).encode('utf-8'))

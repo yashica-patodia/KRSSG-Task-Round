@@ -2,6 +2,7 @@ import math
 import socket
 from threading import Thread
 import pickle
+
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
@@ -21,7 +22,6 @@ conn.setblocking(0)
 
 
 MAX=100
-FLOORS=20
 U=1
 D=-1
 REST=0
@@ -49,7 +49,7 @@ class System():
         self.waiting=[]
         self.time=0
         self.count=0
-
+#FUNCTION USED TO EMULATE TIME FLOW AND RECEIVE DYNAMIC DATA
     def Time(self):
         self.time+=1
         time.sleep(1)
@@ -74,13 +74,13 @@ class System():
             except:
                 continue
         print("TIME: ",self.time)
-
+#FUNCTION USED TO RECEIVE INFORMATION
     def button_pressed(self,a,b,direction):
         p=Person(a,b,direction)
         self.waiting.append(p)
         self.count+=1
 
-
+#FUNCTION USED TO CALCULATE THE NEAREST FLOOR TO A LIFT WHEN BOTH COME AT REST
     def nearest_floor(self):
         if self.count==0:
             return
@@ -101,7 +101,7 @@ class System():
                     if distance>abs(self.lift1.current_floor-i.origin):
                         near_floor=i.origin
                         self.lift1.destination=i.destination
-                        #ADD FOR 0 CONDITION
+
                         if i.origin-self.lift1.current_floor==0:
                             self.lift1.state=REST
                         else:
@@ -167,6 +167,7 @@ class System():
 
             if len(self.lift1.assigned)==0:
                 self.lift1.state=REST
+#FUNCTION FOR MOVING LIFT
 
     def move_lift(self):
         if self.lift1.state==REST and self.lift2.state==REST and len(self.waiting)!=0:
@@ -190,7 +191,7 @@ class System():
             return
         else:
             self.move_lift()
-
+#FUNCTION TO CHECK IF ANY LIFT HAS TO PICK UP A PERSON AT A FLOOR
     def pickCheck(self):
         for i in self.lift1.assigned:
             if i.origin==self.lift1.current_floor:
@@ -209,7 +210,7 @@ class System():
                 self.lift2.state=i.direction
                 print("LIFT 2 PICKS PERSON FROM FLOOR ",i.origin)
                 break
-
+#FUNCTION TO CHECK IF ANY LIFT HAS TO DROP A PERSON AT A FLOOR
     def dropcheck(self):
         i=0
         while i<len(self.lift1.in_lift):
@@ -229,6 +230,7 @@ class System():
                 i+=1
         self.state_change()
 
+#FUNCTION FOR MOVING LIFT TO ITS NEXT TARGET
     def state_change(self):
         distance=MAX
         for i in self.lift1.in_lift:
@@ -253,6 +255,7 @@ class System():
         if self.count==0:
             return
 
+#FUNCTION USED TO ASSIGN PERSONS TO THE LIFTS
     def  update(self):
         if len(self.lift1.assigned)==0 and len(self.lift1.in_lift)==0:
             self.lift1.state=REST
@@ -276,6 +279,7 @@ class System():
             return
 
 if __name__ =="__main__":
+#CLASS OBJECT system created
     system=System()
     n=input("ENTER NO.OF INITIAL INPUTS")
     for i in range(0,int(n)):

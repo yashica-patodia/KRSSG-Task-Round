@@ -201,10 +201,6 @@ include_directories(
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-add_executable(talker src/talker.cpp)
-target_link_libraries(talker ${catkin_LIBRARIES})
-add_dependencies(talker task_generate_messages_cpp)
-
 add_executable(listener src/listener.cpp)
 target_link_libraries(listener ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_dependencies(listener task_generate_messages_cpp)
