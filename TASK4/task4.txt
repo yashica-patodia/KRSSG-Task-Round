@@ -1,0 +1,53 @@
+﻿-----------------TASK4---------------
+
+1.The Observation Space contains 3 components-
+  a)cos(theta)-(-1,1)
+  b)sin(theta)-(-1,1)
+  c)angular velocity-(-8,8)
+  
+  The angle is taken w.r.t to the vertical axis(anticlockwise direction)
+
+2.The Action Space contains a single component namely the torque applied to the pendulum by the system.The torque may vary from -2 to 2.
+
+3.Self.state contains two elements-
+a)normalized angle made by the pendulum-(-    ,      )
+b)angular velocity of the pendulum-
+	   Here,It is defined as continuous function ranging from -2 to 2
+
+4.The reward calculation depends on different components-
+	  a)angular velocity
+   b)angle made by the rod with its upright position
+   c)torque applied to the rod
+	
+In the given model a pendulum is given an initial velocity and displacement from its mean position and our objective is to make it upright by applying suitable amounts of torque as and when needed
+
+The dependence of reward is biased towards the angle made by the rod as the main objective is to make it upright henceforth to reduce the angle between the rod and and its upright position.
+
+This is followed by angular velocity as to stay in an upright position for majority the system should learn to reduce its angular velocity so as to stay in an upright position
+
+Finally,The torque applied to the pendulum.Nearer to the Upright position as the angle and velocity gets reduced(ideally),the system should learn to reduce its torque so as to just balance out the small displacements from its mean position and not apply unnecessary torque here
+
+5.No,there is a decrease in the proficiency of the trained agent when we increase the weight for the angle offset and reduce it for angular velocity
+
+The given graph is for reward=-(1.5*(angle_normalize(th)**2) + 0.08*(thdot**2) + 0.01*(u**2))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6.The Motion gets biased towards the left direction as the applied torque is discouraged to be positive i.e in the right direction.There is still no evident increase in the proficiency of the PPO agent
+as was expected as the agent should be unbiased in trying to achieve the upright position
+
+the given graph is for reward = -(1.5*(angle_normalize(th)**2) + 0.08*(thdot**2) + 0.01*(u**2)+0.5*u)
+
