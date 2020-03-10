@@ -2,7 +2,8 @@
 
 ## Task 1:
 ### Implementation of Socket Programming and MultiThreading
-        
+        Approach-I used TCP to send and recieve data and used the socket module avaiable in python to implement 
+        the same and for multithreading i used the threading module         
 
         
         Running:-
@@ -12,6 +13,10 @@
 
 ## Task 2:
 ### Implementation of working of a Dual Elevator System using FSM(Finite State Machine) with dynamic input and initial input 
+        
+        Approach-Implemented finite state machines for the lift encounter problem using basic knowledge of classes in python
+        and tried to use inheritance wherever possible.For Dynamic input I added a function for the flow of time and used 
+        socket programming learnt in Task1 for sending and receiving data from The client side to the lift system side 
         
         Running:-
         1.Run the lift python script
@@ -24,6 +29,9 @@
         
 ## Task 3:
 ### Path Planning using RRT*_Connect and mimicing it on ROS TurtleSim\
+         Approach-Implemented the RRT* version of RRT_connect.Used ROS,file handling and used P of PID
+         (Coudn't find other coeffs) for path following of turtlesim
+         and for dynamic path planning 
              
          Prerequisites:
          1.OpenCV
