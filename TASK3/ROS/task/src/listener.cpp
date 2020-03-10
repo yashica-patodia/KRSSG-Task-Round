@@ -42,7 +42,10 @@ node *T_start[5000],*T_end[5000];
 
 int start_nodes = 0,end_nodes=0;
 int reached = 0;
+
+
 int Line_Radius=20;
+
 vector<coordi>t1,t2;
 int step_size=5;
 int present[800][800]={0};
@@ -436,7 +439,7 @@ void rewire(node *Tree[5000],node *stepnode,int total_nodes,node *Check_Tree[500
 int rrt_connect( node* Tree[5000],int *total_nodes,node *Check_Tree[5000],int *ctotal_nodes,int color)
 {
 
-  int flag1 = 0,index=0,flag2 = 0;
+  int flag1 = 0, index = 0, flag2 = 0;
 
   float thresh1=10;
     node* rnode = new node;
@@ -470,7 +473,7 @@ int rrt_connect( node* Tree[5000],int *total_nodes,node *Check_Tree[5000],int *c
 
     line(img, Point((stepnode->position).y, (stepnode->position).x), Point(Tree[index]->position.y, Tree[index]->position.x), Scalar(color,255,0), 2, 8);
 
-   index=near_node(*stepnode,Check_Tree,*ctotal_nodes);
+    int index=near_node(*stepnode,Check_Tree,*ctotal_nodes);
 
     if((check_validity_1(stepnode->position,Check_Tree[index]->position)) && (check_validity_2(stepnode->position,Check_Tree[index]->position)) && node_dist(stepnode->position,Check_Tree[index]->position)<=step_size)
     {

@@ -31,21 +31,6 @@ Finally,The torque applied to the pendulum.Nearer to the Upright position as the
 
 The given graph is for reward=-(1.5*(angle_normalize(th)**2) + 0.08*(thdot**2) + 0.01*(u**2))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 6.The Motion gets biased towards the left direction as the applied torque is discouraged to be positive i.e in the right direction.There is still no evident increase in the proficiency of the PPO agent
 as was expected as the agent should be unbiased in trying to achieve the upright position
 
