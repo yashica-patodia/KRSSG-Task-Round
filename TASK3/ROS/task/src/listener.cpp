@@ -300,7 +300,7 @@ void data(node* Tree[5000],int total_nodes,node *Check_Tree[5000],int ctotal_nod
 
   fstream file;
 
-  file.open("catkin_ws/task.txt",ios::out);
+  file.open("task.txt",ios::out);
   //cout<<"WRITTEN";
   int f_size=(a_size+b_size);
 
