@@ -18,11 +18,11 @@
 using namespace cv;
 using namespace std;
 
-struct coordi
+typedef struct
 {
   int x;
   int y;
-};
+}coordi;
 
 struct node {
 
@@ -34,28 +34,16 @@ struct node {
 node start_node;
 node end_node;
 Mat img;
-//T*START:TREE FROM STARTING NODE
-//T*END:TREE FROM ENDING NODE
 node *T_start[5000],*T_end[5000];
 int start_nodes = 0,end_nodes=0;
-
 int reached = 0;
-//Line_Radius is the minimum distance between the line joining two nodes of any tree
-int Line_Radius=10;
-
-Mat White(1,1,CV_8UC3,Scalar(255,255,255));
-
-Mat Black(1,1,CV_8UC3,Scalar(0,0,0));
-
+int Line_Radius=4;
+Mat c_0(1,1,CV_8UC3,Scalar(255,255,255));
+Mat c_1(1,1,CV_8UC3,Scalar(0,0,0));
 vector<coordi>t1,t2;
 
-//Step_size is the growth distance
-int step_size=5;
-//ARRAY USED TO REPRESENT IF A NODE IS PRESENT AT A GIVEN COORDINATE
 int present[800][800]={0};
-//REWIRE RADIUS FOR RRT*
-int rewire_radius=40;
-//INITIALIZING FUNCTION
+
 void init()
 {   for(int i=0;i<img.rows;i++)
     {
@@ -111,7 +99,6 @@ void init()
     dilate(img,img,element);
 }
 
-//FUNCTION TO CHECK IF A GIVEN COORDINATE LIES INSIDE THE BOUNDARIES OF THE IMAGE MAT
 int isvalid(int a,int b,Mat c)
 {
 	if(a>=0&&b>=0&&a<c.rows&& b<c.cols)
@@ -120,7 +107,7 @@ int isvalid(int a,int b,Mat c)
 		return 0;
 }
 
-//FUNCTION TO CALCULATE DISTANCE BETWEEN TWO NODES
+
 float node_dist(coordi p, coordi q)
 {
   coordi v;
@@ -129,8 +116,7 @@ float node_dist(coordi p, coordi q)
   return sqrt(pow(v.x, 2) + pow(v.y, 2));
 }
 
-//FUNCTION TO FIND THE NEAREST NODE IN A GIVEN TREE FROM A GIVEN COORDINATE USING BRUTE FORCE
-//HEURISTIC PARAMTER ALSO ADDED WITH RESPECT TO THE OPPOSITE TARGET POINT
+
 int near_node(node rnode, node* Tree[5000],int total_nodes)
 {
   float min_dist = 5000;
@@ -147,8 +133,7 @@ int near_node(node rnode, node* Tree[5000],int total_nodes)
 
   for(i=0; i<total_nodes; i++)
   {
-    dist = node_dist(Tree[i]->position, rnode.position)+node_dist(Tree[i]->position,target);
-    //dist = node_dist(Tree[i]->position, rnode.position);
+    dist = node_dist(Tree[i]->position, rnode.position);
     if(dist<min_dist)
     {
       min_dist = dist;
@@ -158,7 +143,7 @@ int near_node(node rnode, node* Tree[5000],int total_nodes)
   return lnode;
 }
 
-//FUNCTION TO CALCULATE THE COORDINATES OF A STEPNODE
+
 coordi stepping(coordi nnode,coordi rnode,int step_size)
 {
   coordi interm, step;
@@ -176,7 +161,7 @@ coordi stepping(coordi nnode,coordi rnode,int step_size)
 
 }
 
-//VALIDITY FUNCTION TO CHECK IF A LINE SEGMENT INTERSECTS AN OBSTRUCTION OR NOT
+
 int check_validity_1(coordi p, coordi q)
 {
   coordi large, small;
@@ -204,14 +189,14 @@ int check_validity_1(coordi p, coordi q)
 
     int j = ((i - (small.x))*(slope) + small.y);
 
-    for(int x=-Line_Radius;x<Line_Radius;x++)
+    for(int x=-Line_Radius/2;x<Line_Radius/2;x++)
     {
-      for(int y=-Line_Radius;y<Line_Radius;y++)
+      for(int y=-Line_Radius/2;y<Line_Radius/2;y++)
       {
         if(isvalid(i+y,j+x,img)!=1)
           return 0;
 
-        if(img.at<Vec3b>(i+y,j+x)==White.at<Vec3b>(0,0))
+        if(img.at<Vec3b>(i+y,j+x)==c_0.at<Vec3b>(0,0))
           return 0;
 
       }
@@ -220,7 +205,7 @@ int check_validity_1(coordi p, coordi q)
   }
   return 1;
 }
-//VALIDITY FUNCTION TO CHECK IF A LINE SEGMENT INTERSECTS AN OBSTRUCTION OR NOT
+
 int check_validity_2(coordi p, coordi q)
 {
   coordi large, small;
@@ -246,14 +231,14 @@ int check_validity_2(coordi p, coordi q)
   {
     int j = (int)(((i - small.y)/slope) + small.x);
 
-    for(int x=-Line_Radius;x<Line_Radius;x++)
+    for(int x=-Line_Radius/2;x<Line_Radius/2;x++)
     {
-      for(int y=-Line_Radius;y<Line_Radius;y++)
+      for(int y=-Line_Radius/2;y<Line_Radius/2;y++)
       {
         if(isvalid(j+x,i+y,img)!=1)
           return 0;
 
-        if(img.at<Vec3b>(j+x,i+y)==White.at<Vec3b>(0,0))
+        if(img.at<Vec3b>(j+x,i+y)==c_0.at<Vec3b>(0,0))
           return 0;
 
       }
@@ -263,7 +248,6 @@ int check_validity_2(coordi p, coordi q)
   return 1;
 }
 
-//FUNCTION FOR DISPLAYING FINAL PATH
 void reach(node * a)
 {
   node up;
@@ -280,7 +264,6 @@ void reach(node * a)
 
 }
 
-//FUNCTION TO STORE THE COORDINATES OF THE FINAL PATH IN AN ARRAY
 void data(node* Tree[5000],int total_nodes,node *Check_Tree[5000],int ctotal_nodes,int index)
 { node* a=Tree[total_nodes-1];
   node* b=Check_Tree[index];
@@ -313,39 +296,53 @@ void data(node* Tree[5000],int total_nodes,node *Check_Tree[5000],int ctotal_nod
     i++;
   }
 
-//   fstream file;
-//   file.open("/home/parth/catkin_ws/task.txt",ios::out);
-//   int f_size=(a_size+b_size);
-//   coordi temp;
-//   temp.x=-1;
-//   temp.y=-1;
-// if(node_dist(Final[0],start_node.position)<node_dist(Final[f_size-1],start_node.position))
-//   for(int i=0;i<f_size;i++)
-//   {
-//     coordi k;
-//     k.x=(Final[i].y/float(img.rows)*12);
-//     k.y=(12-(Final[i].x/float(img.rows)*12));
-//     if(k.y==temp.y && k.x==temp.x || node_dist(k,temp)<1)
-//       continue;
-//     file<<(Final[i].y/float(img.rows)*12)<<" "<<(12-(Final[i].x/float(img.rows)*12))<<"\n";
-//     temp.x=(Final[i].y/float(img.rows)*12);
-//     temp.y=(12-(Final[i].x/float(img.rows)*12));
-//   }
-// else
-// for(int i=f_size-1;i>=0;i--)
-// {
-//   coordi k;
-//   k.x=(Final[i].y/float(img.rows)*12);
-//   k.y=(12-(Final[i].x/float(img.rows)*12));
-//   if(k.y==temp.y && k.x==temp.x || node_dist(k,temp)<1)
-//     continue;
-//   file<<(Final[i].y/float(img.rows)*12)<<" "<<(12-(Final[i].x/float(img.rows)*12))<<"\n";
-//   temp.x=(Final[i].y/float(img.rows)*12);
-//   temp.y=(12-(Final[i].x/float(img.rows)*12));
-// }
+  fstream file;
+
+  file.open("/home/parth/catkin_ws/task.txt",ios::out);
+
+  int f_size=(a_size+b_size);
+
+  coordi temp;
+  temp.x=-1;
+  temp.y=-1;
+if(node_dist(Final[0],start_node.position)<node_dist(Final[f_size-1],start_node.position))
+  for(int i=0;i<f_size;i++)
+  {
+    coordi k;
+
+    k.x=(Final[i].y/float(img.rows)*12);
+    k.y=(12-(Final[i].x/float(img.rows)*12));
+
+    if(k.y==temp.y && k.x==temp.x || node_dist(k,temp)<1)
+      continue;
+
+    file<<(Final[i].y/float(img.rows)*12)<<" "<<(12-(Final[i].x/float(img.rows)*12))<<"\n";
+    temp.x=(Final[i].y/float(img.rows)*12);
+    temp.y=(12-(Final[i].x/float(img.rows)*12));
+
+  }
+else
+for(int i=f_size-1;i>=0;i--)
+{
+  coordi k;
+
+  k.x=(Final[i].y/float(img.rows)*12);
+  k.y=(12-(Final[i].x/float(img.rows)*12));
+
+  if(k.y==temp.y && k.x==temp.x || node_dist(k,temp)<1)
+    continue;
+
+  file<<(Final[i].y/float(img.rows)*12)<<" "<<(12-(Final[i].x/float(img.rows)*12))<<"\n";
+  temp.x=(Final[i].y/float(img.rows)*12);
+  temp.y=(12-(Final[i].x/float(img.rows)*12));
+
 }
 
-//FUNCTION TO RETURN THE NODE PRESENT AT A GIVEN COORDINATE
+
+
+
+}
+
 node* find(coordi v,node *Tree[5000],int total_nodes)
 {
   for(int i=0;i<total_nodes;i++)
@@ -360,7 +357,8 @@ node* find(coordi v,node *Tree[5000],int total_nodes)
 }
 
 
-//REWIRING FUNCTION FOR RRT*
+int rewire_radius=600;
+
 void rewire(node *Tree[5000],node *stepnode,int total_nodes,node *Check_Tree[5000],int ctotal_nodes)
 {
 
@@ -371,17 +369,22 @@ void rewire(node *Tree[5000],node *stepnode,int total_nodes,node *Check_Tree[500
         coordi v;
         v.x=((stepnode->position).x)+i;
         v.y=((stepnode->position).y)+j;
+
         if(isvalid(v.x,v.y,img)==1)
+
         if((present[v.x][v.y]==1))
-        {node *temp=find(v,Tree,total_nodes);
-        if(temp==NULL)
-        return;
-        if(check_validity_1(v,stepnode->position)==1 && check_validity_2(v,stepnode->position)==1 && (node_dist(v,stepnode->position)+(temp->distance))+0.001<(node_dist(stepnode->position,(stepnode->parent)->position)+((stepnode->parent)->distance)))
-        {
-          line(img,Point((stepnode->position).y, (stepnode->position).x), Point(((stepnode->parent)->position).y,((stepnode->parent)->position).x), Scalar(0,0,0), 1, 8);
-          stepnode->parent=temp;
-          stepnode->distance=((stepnode->parent)->distance)+node_dist(v,stepnode->position);
-          line(img, Point((stepnode->position).y, (stepnode->position).x), Point(((stepnode->parent)->position).y,((stepnode->parent)->position).x), Scalar(120,120,10),1, 8);
+
+        { node *temp=find(v,Tree,total_nodes);
+          if(temp==NULL)
+          continue;
+          if(check_validity_1(v,stepnode->position)==1 && check_validity_2(v,stepnode->position)==1 && (node_dist(v,stepnode->position)+(temp->distance))<(node_dist(stepnode->position,(stepnode->parent)->position)+((stepnode->parent)->distance)))
+          {
+            //stepnode->parent=find(v,Check_Tree,ctotal_nodes);
+            line(img,Point((stepnode->position).y, (stepnode->position).x), Point(((stepnode->parent)->position).y,((stepnode->parent)->position).x), Scalar(0,0,0), 1, 8);
+            stepnode->parent=temp;
+            stepnode->distance=((stepnode->parent)->distance)+node_dist(v,stepnode->position);
+
+            line(img, Point((stepnode->position).y, (stepnode->position).x), Point(((stepnode->parent)->position).y,((stepnode->parent)->position).x), Scalar(120,120,10),1, 8);
 
         }
       }
@@ -392,44 +395,53 @@ void rewire(node *Tree[5000],node *stepnode,int total_nodes,node *Check_Tree[500
   {
     for(int j=-rewire_radius;j<rewire_radius;j++)
     {
-      coordi v;
-      v.x=((stepnode->position).x)+i;
-      v.y=((stepnode->position).y)+j;
+        coordi v;
+        v.x=((stepnode->position).x)+i;
+        v.y=((stepnode->position).y)+j;
 
-      if(isvalid(v.x,v.y,img)==1)
-      {
-        if((present[v.x][v.y]==1))
-        {
-          float nodal_distance=node_dist(stepnode->position,v);
-          node *t=find(v,Tree,total_nodes);
-
-          if(t==NULL)
-          return ;
-
-          if(t->distance>(stepnode->distance+nodal_distance)&&check_validity_1(v,stepnode->position)==1&&check_validity_2(v,stepnode->position)==1)
+        if(isvalid(v.x,v.y,img)==1)
+          if((present[v.x][v.y]==1))
           {
-            line(img,Point(((t->parent)->position).y, ((t->parent)->position).x),Point(v.y,v.x), Scalar(0,0,0), 1, 8);
+            float d=node_dist(stepnode->position,v);
+            node *t=find(v,Tree,total_nodes);
 
-            t->parent=stepnode;
-            t->distance=stepnode->distance+nodal_distance;
+            if(t==NULL)
+            return ;
+            //t=find(v,Check_Tree,ctotal_nodes);
 
-            line(img,Point(((t->parent)->position).y, ((t->parent)->position).x),Point(v.y,v.x),Scalar(120,120,10),1, 8);
-            imshow("window",img);
-            waitKey(1);
+            if(t->distance>(stepnode->distance+d)&&check_validity_1(v,stepnode->position)==1&&check_validity_2(v,stepnode->position)==1)
+            {
+              line(img,Point(((t->parent)->position).y, ((t->parent)->position).x),Point(v.y,v.x), Scalar(0,0,0), 1, 8);
+
+              t->parent=stepnode;
+              t->distance=stepnode->distance+d;
+
+              line(img,Point(((t->parent)->position).y, ((t->parent)->position).x),Point(v.y,v.x),Scalar(120,120,10),1, 8);
+              imshow("window",img);
+              waitKey(1);
+            }
+
+
           }
-        }
-      }
+
     }
+
   }
+  //for(int i=0;i<total_nodes;i++)
+  //{
+
+  //}
+
 }
+
 
 
 int rrt_connect( node* Tree[5000],int *total_nodes,node *Check_Tree[5000],int *ctotal_nodes,int color)
 {
 
   int flag1 = 0, index = 0, flag2 = 0;
-
-  float thresh1=10;
+  int step_size=20;
+  float thresh1=10,thresh2=200;
     node* rnode = new node;
     node* stepnode = new node;
     (rnode->position).x = (rand() % (img.rows)) + 1;
@@ -440,6 +452,20 @@ int rrt_connect( node* Tree[5000],int *total_nodes,node *Check_Tree[5000],int *c
 
     if(isvalid((rnode->position).x,(rnode->position).y,img)==0)
       return -1;
+
+      for(int i=rnode->position.x - 1; i <= rnode->position.x + 1; i++)
+        {
+          for(int j=rnode->position.y - 1; j <= rnode->position.y + 1; j++)
+          {
+            if(isvalid(i,j,img)!=1)
+              continue;
+
+            img.at<Vec3b>(i, j)[0] = 0;
+            img.at<Vec3b>(i, j)[1] = 255-color;
+            img.at<Vec3b>(i, j)[2] = 255;
+          }
+        }
+
 
     index = near_node(*rnode,Tree,*total_nodes);
 
@@ -453,53 +479,38 @@ int rrt_connect( node* Tree[5000],int *total_nodes,node *Check_Tree[5000],int *c
     if(flag1!=1||flag2!=1)
       return -1;
 
+    if(1)
+    {
       stepnode->position = stepping(Tree[index]->position, rnode->position,step_size);
-
       present[(stepnode->position).x][(stepnode->position).y]=1;
-
       Tree[(*total_nodes)++]=stepnode;
-
       stepnode->parent = Tree[index];
 
       stepnode->distance =node_dist(Tree[index]->position,stepnode->position)+(stepnode->parent)->distance;
 
       line(img, Point((stepnode->position).y, (stepnode->position).x), Point(Tree[index]->position.y, Tree[index]->position.x), Scalar(color,255,0), 1, 8);
 
-      index=near_node(*stepnode,Check_Tree,*ctotal_nodes);
+      int index=near_node(*stepnode,Check_Tree,*ctotal_nodes);
 
-//    REWIRING FUNCTION CAN BE COMMENTED TO TURN IT INTO rrt_connect
       rewire(Tree,stepnode,*total_nodes,Check_Tree,*ctotal_nodes);
-      if((check_validity_1(stepnode->position,Check_Tree[index]->position)) && (check_validity_2(stepnode->position,Check_Tree[index]->position)) && node_dist(stepnode->position,Check_Tree[index]->position)<30)
+      if((check_validity_1(stepnode->position,Check_Tree[index]->position)) && (check_validity_2(stepnode->position,Check_Tree[index]->position)) && node_dist(stepnode->position,Check_Tree[index]->position)<50)
       {
         reached=1;
         line(img, Point((stepnode->position).y, (stepnode->position).x), Point(Check_Tree[index]->position.y, Check_Tree[index]->position.x), Scalar(0,255,255), 2, 8);
-
         imshow("window",img);
         waitKey(1);
-
         reach(stepnode);
         reach(Check_Tree[index]);
-
         data(Tree,*total_nodes,Check_Tree,*ctotal_nodes,index);
-
         return 1;
       }
       //imshow("window", img);
       //waitKey(10);
-    /*  for(int i=stepnode->position.x - 1; i <= stepnode->position.x + 1; i++)
-      {
-        for(int j=stepnode->position.y - 1; j <= stepnode->position.y + 1; j++)
-        {
-          if(isvalid(i,j,img)!=1)
-            continue;
-
-          img.at<Vec3b>(i, j)[0] = 100;
-          img.at<Vec3b>(i, j)[1] = 255-color;
-          img.at<Vec3b>(i, j)[2] = 255;
-        }
-      }
+    /*
     */
-    return 1;
+      return 1;
+    }
+    return -1;
   }
 
 
@@ -512,8 +523,6 @@ int main()
   namedWindow( "window", WINDOW_NORMAL);
   init();
   int i=0;
-
-  //WHIILE LOOP USED FOR ALTERNATE TREE GROWTH
   while(reached==0)
   {   int n=0;
      if((i%2)==0)
@@ -528,8 +537,8 @@ int main()
         i--;
       }
       i++;
-  }
 
+  }
   imshow("window", img);
   waitKey(0);
   return 0;
