@@ -35,7 +35,7 @@ Mat Brown(1,1,CV_8UC3,Scalar(120,120,120));
 
 
 int villain_Radius=30;
-int rewire_radius=50;
+int rewire_radius=500;
 Mat img;
 
 node *T_start[5000],*T_end[5000];
@@ -487,7 +487,7 @@ int rrt_connect( node* Tree[5000],int *total_nodes,node *Check_Tree[5000],int *c
 
     }
 //RRT* CAN BE SWITCHED ON BY UNCOMMENTING THE LINE BELOW
-    //rewire(Tree,stepnode,*total_nodes,Check_Tree,*ctotal_nodes);
+    rewire(Tree,stepnode,*total_nodes,Check_Tree,*ctotal_nodes);
     for(int i=stepnode->position.x - 1; i <= stepnode->position.x + 1; i++)
     {
       for(int j=stepnode->position.y - 1; j <= stepnode->position.y + 1; j++)
