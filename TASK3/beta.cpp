@@ -385,7 +385,8 @@ void rewire(node *Tree[5000],node *stepnode,int total_nodes,node *Check_Tree[500
             stepnode->distance=((stepnode->parent)->distance)+node_dist(v,stepnode->position);
 
             line(img, Point((stepnode->position).y, (stepnode->position).x), Point(((stepnode->parent)->position).y,((stepnode->parent)->position).x), Scalar(120,120,10),1, 8);
-
+            imshow("window",img);
+            waitKey(1);
         }
       }
     }
@@ -489,7 +490,8 @@ int rrt_connect( node* Tree[5000],int *total_nodes,node *Check_Tree[5000],int *c
       stepnode->distance =node_dist(Tree[index]->position,stepnode->position)+(stepnode->parent)->distance;
 
       line(img, Point((stepnode->position).y, (stepnode->position).x), Point(Tree[index]->position.y, Tree[index]->position.x), Scalar(color,255,0), 1, 8);
-
+      imshow("window", img);
+      waitKey(10);
       int index=near_node(*stepnode,Check_Tree,*ctotal_nodes);
 
       rewire(Tree,stepnode,*total_nodes,Check_Tree,*ctotal_nodes);
@@ -504,8 +506,8 @@ int rrt_connect( node* Tree[5000],int *total_nodes,node *Check_Tree[5000],int *c
         data(Tree,*total_nodes,Check_Tree,*ctotal_nodes,index);
         return 1;
       }
-      //imshow("window", img);
-      //waitKey(10);
+      imshow("window", img);
+      waitKey(10);
     /*
     */
       return 1;
